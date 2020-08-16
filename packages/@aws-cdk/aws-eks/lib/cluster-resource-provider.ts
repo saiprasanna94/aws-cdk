@@ -1,38 +1,27 @@
+import * as path from 'path';
 import * as iam from '@aws-cdk/aws-iam';
 import * as lambda from '@aws-cdk/aws-lambda';
-import { Construct, Duration, NestedStack, Stack } from '@aws-cdk/core';
+import { Construct, Duration } from '@aws-cdk/core';
 import * as cr from '@aws-cdk/custom-resources';
-import * as path from 'path';
 
 const HANDLER_DIR = path.join(__dirname, 'cluster-resource-handler');
 const HANDLER_RUNTIME = lambda.Runtime.NODEJS_12_X;
 
+export interface ClusterResourceProviderProps {
+  readonly clusterAdminRole: iam.Role;
+}
+
 /**
- * A custom resource provider that handles cluster operations. It serves
- * multiple custom resources such as the cluster resource and the fargate
- * resource.
+ * A custom resource provider that handles cluster operations for a specific
+ * cluster. It serves multiple custom resources such as the cluster resource and
+ * the fargate resource.
  *
  * @internal
  */
-export class ClusterResourceProvider extends NestedStack {
+export class ClusterResourceProvider extends Construct {
+  public readonly serviceToken: string;
 
-  public static getOrCreate(scope: Construct) {
-    const stack = Stack.of(scope);
-    const uid = '@aws-cdk/aws-eks.ClusterResourceProvider';
-    return stack.node.tryFindChild(uid) as ClusterResourceProvider || new ClusterResourceProvider(stack, uid);
-  }
-
-  /**
-   * The custom resource provider to use for custom resources.
-   */
-  public readonly provider: cr.Provider;
-
-  /**
-   * The IAM roles used by the provider's lambda handlers.
-   */
-  public readonly roles: iam.IRole[];
-
-  private constructor(scope: Construct, id: string) {
+  public constructor(scope: Construct, id: string, props: ClusterResourceProviderProps) {
     super(scope, id);
 
     const onEvent = new lambda.Function(this, 'OnEventHandler', {

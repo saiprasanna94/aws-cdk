@@ -8,6 +8,8 @@ import { clusterArnComponents } from './cluster-resource';
 import { CfnCluster, CfnClusterProps } from './eks.generated';
 import { Nodegroup, NodegroupOptions  } from './managed-nodegroup';
 import { renderAmazonLinuxUserData, renderBottlerocketUserData } from './user-data';
+import { KubernetesResource } from './k8s-resource';
+import { HelmChartOptions, HelmChart } from './helm-chart';
 
 // defaults are based on https://eksctl.io
 const DEFAULT_CAPACITY_COUNT = 2;
@@ -387,6 +389,7 @@ class ImportedCluster extends Resource implements ICluster {
   public readonly clusterArn: string;
   public readonly clusterEndpoint: string;
   public readonly connections = new ec2.Connections();
+  public readonly kubectlResourceProvider = undefined;
 
   constructor(scope: Construct, id: string, props: ClusterAttributes) {
     super(scope, id);
@@ -404,6 +407,14 @@ class ImportedCluster extends Resource implements ICluster {
       this.connections.addSecurityGroup(ec2.SecurityGroup.fromSecurityGroupId(this, `SecurityGroup${i}`, sgProps.securityGroupId));
       i++;
     }
+  }
+
+  public addResource(_id: string, ..._manifest: any[]): KubernetesResource {
+    throw new Error('legacy cluster does not support adding kubernetes manifests');
+  }
+
+  public addChart(_id: string, _options: HelmChartOptions): HelmChart {
+    throw new Error('legacy cluster does not support adding helm charts');
   }
 }
 

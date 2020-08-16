@@ -1,7 +1,7 @@
 import * as ec2 from '@aws-cdk/aws-ec2';
 import * as iam from '@aws-cdk/aws-iam';
 import { Construct, CustomResource, ITaggable, Lazy, TagManager, TagType } from '@aws-cdk/core';
-import { Cluster } from './cluster';
+import { ICluster } from './cluster';
 import { FARGATE_PROFILE_RESOURCE_TYPE } from './cluster-resource-handler/consts';
 import { ClusterResourceProvider } from './cluster-resource-provider';
 
@@ -61,9 +61,8 @@ export interface FargateProfileOptions {
 export interface FargateProfileProps extends FargateProfileOptions {
   /**
    * The EKS cluster to apply the Fargate profile to.
-   * [disable-awslint:ref-via-interface]
    */
-  readonly cluster: Cluster;
+  readonly cluster: ICluster;
 }
 
 /**

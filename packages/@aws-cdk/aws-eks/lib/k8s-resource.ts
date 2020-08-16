@@ -1,5 +1,6 @@
 import { Construct, CustomResource, Stack } from '@aws-cdk/core';
-import { Cluster } from './cluster';
+import { ICluster, Cluster } from './cluster';
+import { KubectlProvider } from './kubectl-provider';
 
 /**
  * Properties for KubernetesResources
@@ -10,7 +11,7 @@ export interface KubernetesResourceProps {
    *
    * [disable-awslint:ref-via-interface]
    */
-  readonly cluster: Cluster;
+  readonly cluster: ICluster;
 
   /**
    * The resource manifest.
@@ -53,8 +54,7 @@ export class KubernetesResource extends Construct {
   constructor(scope: Construct, id: string, props: KubernetesResourceProps) {
     super(scope, id);
 
-    const stack = Stack.of(this);
-    const provider = props.cluster._attachKubectlResourceScope(this);
+    const provider = KubectlProvider.getOrCreate(this, props.cluster);
 
     new CustomResource(this, 'Resource', {
       serviceToken: provider.serviceToken,
@@ -63,9 +63,11 @@ export class KubernetesResource extends Construct {
         // `toJsonString` enables embedding CDK tokens in the manifest and will
         // render a CloudFormation-compatible JSON string (similar to
         // StepFunctions, CloudWatch Dashboards etc).
-        Manifest: stack.toJsonString(props.manifest),
+        Manifest: Stack.of(this).toJsonString(props.manifest),
         ClusterName: props.cluster.clusterName,
-        RoleArn: props.cluster._kubectlCreationRole.roleArn,
+
+        // TODO: bake into provider's environment
+        RoleArn: provider.clusterAdminRoleArn,
       },
     });
   }
